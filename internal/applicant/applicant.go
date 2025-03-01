@@ -153,6 +153,7 @@ func apply(challengeProvider challenge.Provider, options *applicantOptions) (*Ap
 	if len(options.Nameservers) > 0 {
 		challengeOptions = append(challengeOptions, dns01.AddRecursiveNameservers(dns01.ParseNameservers(options.Nameservers)))
 		challengeOptions = append(challengeOptions, dns01.DisableAuthoritativeNssPropagationRequirement())
+		challengeOptions = append(challengeOptions, dns01.RecursiveNSsPropagationRequirement())
 	}
 	client.Challenge.SetDNS01Provider(challengeProvider, challengeOptions...)
 
