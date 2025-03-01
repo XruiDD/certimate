@@ -3,6 +3,7 @@
 import (
 	"context"
 	"strings"
+	"time"
 
 	xerrors "github.com/pkg/errors"
 	veDcdn "github.com/volcengine/volcengine-go-sdk/service/dcdn"
@@ -86,7 +87,10 @@ func (d *DeployerProvider) Deploy(ctx context.Context, certPem string, privkeyPe
 		CertId:      ve.String(upres.CertId),
 		DomainNames: ve.StringSlice([]string{domain}),
 	}
-	createCertBindResp, err := d.sdkClient.CreateCertBind(createCertBindReq)
+	req, createCertBindResp := d.sdkClient.CreateCertBindRequest(createCertBindReq)
+	req.RetryErrorCodes = []string{"OtherServiceError"}
+	req.RetryDelay = time.Duration(1) * time.Second
+	err = req.Send()
 	if err != nil {
 		return nil, xerrors.Wrap(err, "failed to execute sdk request 'dcdn.CreateCertBind'")
 	} else {
@@ -101,7 +105,7 @@ func createSdkClient(accessKeyId, accessKeySecret, region string) (*veDcdn.DCDN,
 		region = "cn-beijing" // DCDN 服务默认区域：北京
 	}
 
-	config := ve.NewConfig().WithRegion(region).WithAkSk(accessKeyId, accessKeySecret)
+	config := ve.NewConfig().WithRegion(region).WithAkSk(accessKeyId, accessKeySecret).WithMaxRetries(3)
 
 	session, err := veSession.NewSession(config)
 	if err != nil {
